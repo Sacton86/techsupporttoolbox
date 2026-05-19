@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ImpactLED Tech Support Toolbox</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --black:   #0a0a0a;
+      --red:     #cc1111;
+      --white:   #ffffff;
+      --gray-500:#888888;
+      --gray-700:#444444;
+      --bg:      #111111;
+      --card-bg: #1a1a1a;
+      --card-bd: #2a2a2a;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--white);
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ── */
+    header {
+      background: var(--black);
+      padding: 18px 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 3px solid var(--red);
+    }
+    .header-title { font-size: 1.3rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+    .header-title span { color: var(--red); }
+    .header-badge {
+      background: var(--red); color: var(--white);
+      font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
+      padding: 5px 13px; border-radius: 4px;
+    }
+
+    /* ── MAIN ── */
+    main { padding: 32px 40px; max-width: 1400px; margin: 0 auto; }
+
+    /* ── GENERATION SECTIONS ── */
+    .gen-section { margin-bottom: 32px; }
+    .gen-label {
+      font-size: 0.7rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+      color: var(--gray-500); margin-bottom: 12px;
+      border-left: 3px solid var(--red); padding-left: 10px;
+    }
+    .gen-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+
+    /* ── MODULE CARD ── */
+    .module-card {
+      background: var(--card-bg); border: 1px solid var(--card-bd); border-radius: 8px;
+      padding: 16px; cursor: pointer;
+      transition: border-color .2s, transform .15s, box-shadow .2s;
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+    }
+    .module-card:hover {
+      border-color: var(--red); transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(204,17,17,.25);
+    }
+    .module-card-img {
+      width: 100%; max-width: 140px; height: 90px;
+      object-fit: contain; border-radius: 4px;
+      background: #222; padding: 4px;
+    }
+    .module-card-info { text-align: center; }
+    .module-card-gen { font-size: .68rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--red); }
+    .module-card-pitch { font-size: 1.15rem; font-weight: 700; color: var(--white); }
+    .module-card-type { font-size: .7rem; color: var(--gray-500); margin-top: 2px; }
+
+    /* ── MODAL OVERLAY ── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.78); z-index: 100;
+      display: none; align-items: flex-start; justify-content: center;
+      padding: 32px 16px; overflow-y: auto;
+    }
+    .modal-overlay.active { display: flex; }
+
+    .modal {
+      background: #141414; border: 1px solid #252525; border-top: 3px solid var(--red);
+      border-radius: 8px; width: 100%; max-width: 960px; padding: 28px 32px;
+      position: relative; animation: slideIn .2s ease;
+    }
+    @keyframes slideIn { from { opacity:0; transform:translateY(-16px); } to { opacity:1; transform:none; } }
+
+    .modal-close {
+      position: absolute; top: 14px; right: 14px;
+      background: none; border: 1px solid #333; color: var(--white);
+      width: 30px; height: 30px; border-radius: 4px; cursor: pointer; font-size: 1rem;
+      display: flex; align-items: center; justify-content: center; transition: border-color .15s, color .15s;
+    }
+    .modal-close:hover { border-color: var(--red); color: var(--red); }
+
+    /* ── MODAL HEADER ── */
+    .modal-header { display: flex; gap: 24px; margin-bottom: 24px; align-items: flex-start; }
+    .modal-module-img {
+      width: 180px; height: 140px; object-fit: contain;
+      background: #1e1e1e; border-radius: 8px; padding: 12px; flex-shrink: 0;
+    }
+    .modal-header-info { flex: 1; }
+    .modal-gen-badge {
+      display: inline-block; background: var(--red); color: var(--white);
+      font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+      padding: 3px 10px; border-radius: 3px; margin-bottom: 8px;
+    }
+    .modal-title { font-size: 1.7rem; font-weight: 700; margin-bottom: 4px; }
+    .modal-subtitle { font-size: .88rem; color: var(--gray-500); margin-bottom: 16px; }
+
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 28px; }
+    .info-row { display: flex; flex-direction: column; gap: 1px; }
+    .info-label { font-size: .65rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--gray-500); }
+    .info-value { font-size: .88rem; font-weight: 500; color: var(--white); }
+
+    .notes-box {
+      background: #1c1c1c; border-left: 3px solid var(--red);
+      padding: 10px 14px; font-size: .82rem; color: #bbb;
+      border-radius: 0 4px 4px 0; margin-top: 14px; line-height: 1.5;
+    }
+
+    .divider { border: none; border-top: 1px solid #252525; margin: 22px 0; }
+
+    /* ── SIZE INPUT ── */
+    .size-section-label {
+      font-size: .7rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+      color: var(--red); margin-bottom: 14px;
+    }
+    .size-form { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
+    .size-input-group { display: flex; flex-direction: column; gap: 4px; }
+    .size-input-group label {
+      font-size: .67rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--gray-500);
+    }
+    .size-input-group input {
+      width: 72px; background: #1e1e1e; border: 1px solid #333; border-radius: 4px;
+      color: var(--white); padding: 8px 10px; font-size: 1rem; font-family: inherit; text-align: center;
+    }
+    .size-input-group input:focus { outline: none; border-color: var(--red); }
+    .size-sep { font-size: 1.4rem; font-weight: 300; color: var(--gray-500); padding-bottom: 6px; }
+    .btn-lookup {
+      background: var(--red); color: var(--white); border: none; border-radius: 4px;
+      padding: 9px 22px; font-size: .82rem; font-weight: 600; letter-spacing: .06em;
+      text-transform: uppercase; cursor: pointer; font-family: inherit; transition: background .15s;
+    }
+    .btn-lookup:hover { background: #aa0d0d; }
+
+    /* ── RESULTS ── */
+    .results-section { display: none; margin-top: 22px; }
+    .results-section.visible { display: block; }
+    .results-label {
+      font-size: .7rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+      color: var(--red); margin-bottom: 14px;
+    }
+    .results-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+    .result-card { background: #1a1a1a; border: 1px solid var(--card-bd); border-radius: 6px; padding: 14px; }
+    .result-card-title {
+      font-size: .65rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+      color: var(--gray-500); margin-bottom: 10px;
+    }
+
+    .result-img { width: 100%; border-radius: 4px; display: block; background: #222; min-height: 60px; }
+    .result-img-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .result-img-wrap { display: flex; flex-direction: column; gap: 4px; }
+    .result-img-label { font-size: .62rem; color: var(--gray-500); text-align: center; }
+
+    .not-avail { color: var(--gray-500); font-size: .8rem; font-style: italic; }
+
+    .config-list { list-style: none; display: flex; flex-direction: column; gap: 7px; }
+    .config-list li { display: flex; align-items: flex-start; gap: 6px; }
+    .config-list a {
+      color: #5a9fd4; font-size: .78rem; text-decoration: none;
+      word-break: break-all; line-height: 1.4;
+    }
+    .config-list a:hover { color: var(--red); text-decoration: underline; }
+    .config-list a::before { content: '↓ '; font-size: .68rem; flex-shrink: 0; }
+    .config-note { font-size: .72rem; color: var(--gray-500); font-style: italic; margin-bottom: 8px; line-height: 1.4; }
+
+    @media (max-width: 700px) {
+      main { padding: 20px 16px; }
+      header { padding: 14px 16px; }
+      .gen-row { grid-template-columns: 1fr 1fr; }
+      .results-grid { grid-template-columns: 1fr; }
+      .modal-header { flex-direction: column; }
+      .modal-module-img { width: 100%; height: 120px; }
+      .info-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-title">Impact<span>LED</span> Tech Support Toolbox</div>
+  <div class="header-badge">Quick Reference</div>
+</header>
+
+<main>
+  <div id="module-grid"></div>
+</main>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal" id="modal">
+    <button class="modal-close" id="modal-close" title="Close">✕</button>
+
+    <div class="modal-header">
+      <img class="modal-module-img" id="modal-img" src="" alt="">
+      <div class="modal-header-info">
+        <div class="modal-gen-badge" id="modal-gen-badge"></div>
+        <div class="modal-title" id="modal-title"></div>
+        <div class="modal-subtitle" id="modal-subtitle"></div>
+        <div class="info-grid" id="modal-info-grid"></div>
+      </div>
+    </div>
+    <div id="modal-notes"></div>
+
+    <hr class="divider">
+
+    <div class="size-section-label">EMC Size Lookup — Enter size in modules (H × W)</div>
+    <div class="size-form">
+      <div class="size-input-group">
+        <label>Height (H)</label>
+        <input type="number" id="input-h" min="1" max="99" placeholder="H">
+      </div>
+      <div class="size-sep">×</div>
+      <div class="size-input-group">
+        <label>Width (W)</label>
+        <input type="number" id="input-w" min="1" max="99" placeholder="W">
+      </div>
+      <button class="btn-lookup" id="btn-lookup">Look Up</button>
+    </div>
+
+    <div class="results-section" id="results-section">
+      <hr class="divider">
+      <div class="results-label">Results</div>
+      <div class="results-grid" id="results-grid"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DATA ────────────────────────────────────────────────────────────────────
+// matrixH = rows per module (height), matrixW = cols per module (width)
+// File naming: {H}x{W}_{H*matrixH}x{W*matrixW}
+
+const SPECS = [
+  // ── G1 ────────────────────────────────────────────────────────────────────
+  { gen:'G1', pitchLabel:'20 mm', type:'RGB / RRGB', toolType:'Square', toolSize:'2.5mm',
+    matrixH:16, matrixW:16,
+    rx:'i5a', hub:'HUB-P16-320-2018 (RGB) / HUB-40A (RRGB)', altRx:'', altHub:'',
+    notes:'',
+    cardImg:'modules/G1-20mm-RGB.png', modalImg:'modules/G1-20mm-RGB.png',
+    testPitch:'20', camsPitch:'20mm',
+    configMode:'flat',
+    configFiles:[
+      'config/G1/CL-G1-P20-2R1G1B-i5a-Hub40.rcvbp',
+      'config/G1/CL-G1-P20-1R1G1B-i5a-Hub16-320-GreenBack.rcvbp',
+      'config/G1/CL-G1-P20-Alt.rcvbp',
+    ]
+  },
+  { gen:'G1', pitchLabel:'16 mm', type:'RGB / RRGB', toolType:'Square', toolSize:'2.5mm',
+    matrixH:20, matrixW:20,
+    rx:'i5a', hub:'HUB-P16-320-2018 (RGB) / HUB P16 20x20 (RRGB)', altRx:'', altHub:'',
+    notes:'',
+    cardImg:'modules/G1-16mm-RGB.png', modalImg:'modules/G1-16mm-RGB.png',
+    testPitch:'15', camsPitch:'15mm',
+    configMode:'flat',
+    configFiles:[
+      'config/G1/CL-G1-P16-2R1G1B-i5a-Hub16-320-20x20.rcvbp',
+      'config/G1/CL-G1-P16-BlueBack-i5a-Hub16-320-20x20.rcvbp',
+      'config/G1/CL-G1-P16-BlueBack-i5a-Hub16-320-20x20-Alt.rcvbp',
+    ]
+  },
+  { gen:'G1', pitchLabel:'10 mm', type:'RGB', toolType:'Square', toolSize:'2.5mm',
+    matrixH:32, matrixW:32,
+    rx:'i5a / 5a-75e', hub:'HUB-P16-320-2018', altRx:'5a-75e', altHub:'N/A',
+    notes:'While the standard HUB 75 can be used for 10 mm greenback modules, it is recommended to use the i5A-75E, which functions as a receiver and HUB75 combo card.',
+    cardImg:'modules/G1-10mm-RGB.png', modalImg:'modules/G1-10mm-RGB.png',
+    testPitch:'10', camsPitch:'10mm',
+    configMode:'flat',
+    configFiles:[
+      'config/G1/CL-G1-P10-GreenBack-5a-75e-32x32.rcvbp',
+      'config/G1/CL-G1-P10-GreenBack-i5a-Hub16-320-32x32.rcvbp',
+      'config/G1/CL-G1-P10-GreenBack-i5a-Hub16-320-32x32-Alt.rcvbp',
+    ]
+  },
+  { gen:'G1', pitchLabel:'6 mm', type:'SMD', toolType:'Square', toolSize:'2.5mm',
+    matrixH:32, matrixW:32,
+    rx:'K5H', hub:'HUB-73-B', altRx:'', altHub:'',
+    notes:'',
+    cardImg:'modules/G1-6mm-SMD.png', modalImg:'modules/G1-6mm-SMD.png',
+    testPitch:null, camsPitch:null,
+    configMode:'flat',
+    configFiles:[
+      'config/G1/CL-G1-P6-V1.rcvbp',
+      'config/G1/CL-G1-P6-V2.rcvbp',
+    ]
+  },
+
+  // ── G2 ────────────────────────────────────────────────────────────────────
+  { gen:'G2', pitchLabel:'20 mm', type:'RGB', toolType:'Hex', toolSize:'3mm',
+    matrixH:8, matrixW:16,
+    rx:'5a-75e', hub:'N/A', altRx:'', altHub:'',
+    notes:'',
+    cardImg:'modules/G2-20mm-RGB.png', modalImg:'modules/G2-20mm-RGB.png',
+    testPitch:'20', camsPitch:'20mm',
+    configMode:'flat',
+    configFiles:[ 'config/G2/CL-G2-P20.rcvbp' ]
+  },
+  { gen:'G2', pitchLabel:'15 mm', type:'RGB', toolType:'Hex', toolSize:'3mm',
+    matrixH:10, matrixW:20,
+    rx:'5a-75e', hub:'N/A', altRx:'', altHub:'',
+    notes:'',
+    cardImg:'modules/G2-15mm-RGB.png', modalImg:'modules/G2-15mm-RGB.png',
+    testPitch:'15', camsPitch:'15mm',
+    configMode:'flat',
+    configFiles:[ 'config/G2/CL-G2-P16.rcvbp' ]
+  },
+  { gen:'G2', pitchLabel:'10 mm', type:'RGB', toolType:'Hex', toolSize:'3mm',
+    matrixH:16, matrixW:32,
+    rx:'5a-75e', hub:'N/A', altRx:'', altHub:'',
+    notes:'',
+    cardImg:'modules/G2-10mm-RGB.png', modalImg:'modules/G2-10mm-RGB.png',
+    testPitch:'10', camsPitch:'10mm',
+    configMode:'flat',
+    configFiles:[ 'config/G2/CL-G2-P10.rcvbp' ]
+  },
+  { gen:'G2', pitchLabel:'6 mm', type:'SMD', toolType:'Hex', toolSize:'2.5mm',
+    matrixH:24, matrixW:48,
+    rx:'5a-75e', hub:'N/A', altRx:'', altHub:'',
+    notes:'',
+    cardImg:'modules/G2-6mm-SMD.png', modalImg:'modules/G2-6mm-SMD.png',
+    testPitch:'6', camsPitch:'6mm',
+    configMode:'flat',
+    configFiles:[
+      'config/G2/CL-G2-P6.rcvbp',
+      'config/G2/CL-G2-P6.67-V4.0.rcvbp',
+    ]
+  },
+
+  // ── G3 ────────────────────────────────────────────────────────────────────
+  { gen:'G3', pitchLabel:'20 mm', type:'RGB', toolType:'Hex', toolSize:'3mm',
+    matrixH:15, matrixW:15,
+    rx:'i5+', hub:'12-Port', altRx:'i5a-907', altHub:'4-Port',
+    notes:'Earlier models will use multiple i5a-907\'s with up to 4 × 4-port hubs each.',
+    cardImg:'modules/G3-20mm-RGB.png', modalImg:'modules/G3-20mm-RGB.png',
+    testPitch:'20', camsPitch:'20mm',
+    configMode:'g3', configPitchFolder:'P 20',
+    configPitchNum:'20', configPrefix:'p20',
+    altConfigPrefix:'p20.32'
+  },
+  { gen:'G3', pitchLabel:'15 mm', type:'RGB', toolType:'Hex', toolSize:'3mm',
+    matrixH:20, matrixW:20,
+    rx:'i5+', hub:'12-Port', altRx:'i5a-907', altHub:'4-Port',
+    notes:'Earlier models will use multiple i5a-907\'s with up to 4 × 4-port hubs each.',
+    cardImg:'modules/G3-15mm-RGB.png', modalImg:'modules/G3-15mm-RGB.png',
+    testPitch:'15', camsPitch:'15mm',
+    configMode:'g3', configPitchFolder:'P 15',
+    configPitchNum:'15', configPrefix:'p15',
+    altConfigPrefix:'p15.24'
+  },
+  { gen:'G3', pitchLabel:'10 mm', type:'RGB', toolType:'Hex', toolSize:'3mm',
+    matrixH:32, matrixW:32,
+    rx:'i5+', hub:'12-Port', altRx:'i5a-907', altHub:'4-Port',
+    notes:'Earlier models will use multiple i5a-907\'s with up to 4 × 4-port hubs each.',
+    cardImg:'modules/G3-10mm-RGB.png', modalImg:'modules/G3-10mm-RGB.png',
+    testPitch:'10', camsPitch:'10mm',
+    configMode:'g3', configPitchFolder:'P10',
+    configPitchNum:'10', configPrefix:'p10',
+    altConfigPrefix:'p10'
+  },
+  { gen:'G3', pitchLabel:'6 mm', type:'SMD', toolType:'Hex', toolSize:'2mm',
+    matrixH:48, matrixW:48,
+    rx:'i5+', hub:'12-Port', altRx:'i5a-907', altHub:'4-Port',
+    notes:'Earlier models will use multiple i5a-907\'s with up to 4 × 4-port hubs each.',
+    cardImg:'modules/G3-6mm-SMD.png', modalImg:'modules/G3-6mm-SMD.png',
+    testPitch:'6', camsPitch:'6mm',
+    configMode:'g3', configPitchFolder:'P6',
+    configPitchNum:'6', configPrefix:'p6',
+    altConfigPrefix:null
+  },
+
+  // ── G4 ────────────────────────────────────────────────────────────────────
+  { gen:'G4', pitchLabel:'15 mm', type:'RGB', toolType:'Hex', toolSize:'2.5mm',
+    matrixH:20, matrixW:20,
+    rx:'k5', hub:'PB-8', altRx:'k5', altHub:'PB-5',
+    notes:'G4\'s will use a combination of PB-8\'s and PB-5\'s.',
+    cardImg:'modules/G4-15mm-RGB.png', modalImg:'modules/G4-15mm-RGB.png',
+    testPitch:'15', camsPitch:'15mm',
+    configMode:'none'
+  },
+  { gen:'G4', pitchLabel:'9 mm', type:'SMD', toolType:'Hex', toolSize:'2.5mm',
+    matrixH:32, matrixW:32,
+    rx:'k5', hub:'PB-8', altRx:'k5', altHub:'PB-5',
+    notes:'G4\'s will use a combination of PB-8\'s and PB-5\'s.',
+    cardImg:'modules/G4-10mm-SMD.png', modalImg:'modules/G4-10mm-SMD.png',
+    testPitch:'9', camsPitch:'9mm',
+    configMode:'none'
+  },
+  { gen:'G4', pitchLabel:'6 mm', type:'SMD', toolType:'Hex', toolSize:'2.5mm',
+    matrixH:48, matrixW:48,
+    rx:'k5', hub:'PB-8', altRx:'k5', altHub:'PB-5',
+    notes:'G4\'s will use a combination of PB-8\'s and PB-5\'s.',
+    cardImg:'modules/G4-6mm-SMD.png', modalImg:'modules/G4-6mm-SMD.png',
+    testPitch:'6', camsPitch:'6mm',
+    configMode:'none'
+  },
+  { gen:'G4', pitchLabel:'4 mm', type:'SMD', toolType:'Hex', toolSize:'2.5mm',
+    matrixH:74, matrixW:74,
+    rx:'k5', hub:'PB-8', altRx:'k5', altHub:'PB-5',
+    notes:'G4\'s will use a combination of PB-8\'s and PB-5\'s.',
+    cardImg:'modules/G4-4mm-SMD.png', modalImg:'modules/G4-4mm-SMD.png',
+    testPitch:'4', camsPitch:'4mm',
+    configMode:'g4', configPitchFolder:'4'
+  },
+
+  // ── G5 ────────────────────────────────────────────────────────────────────
+  { gen:'G5', pitchLabel:'15 mm', type:'Hybrid', toolType:'Hex', toolSize:'3mm',
+    matrixH:20, matrixW:20,
+    rx:'k5', hub:'HUB-G5-3', altRx:'k5', altHub:'HUB-G5-4',
+    notes:'There is also a HUB-G5-2 version as well.',
+    cardImg:'modules/G5-15mm-Hybrid.png', modalImg:'modules/G5-15mm-Hybrid.png',
+    testPitch:null, camsPitch:null,
+    configMode:'g5', configPitchFolder:'P15', configFileExt:'P15.24.rcvbp', configDirSuffix:'p15.24'
+  },
+  { gen:'G5', pitchLabel:'9 mm', type:'SMD', toolType:'Hex', toolSize:'3mm',
+    matrixH:32, matrixW:32,
+    rx:'k5', hub:'HUB-G5-3', altRx:'k5', altHub:'HUB-G5-4',
+    notes:'There is also a HUB-G5-2 version as well.',
+    cardImg:'modules/G5-9mm-SMD.png', modalImg:'modules/G5-9mm-SMD.png',
+    testPitch:null, camsPitch:null,
+    configMode:'g5', configPitchFolder:'P9', configFileExt:'P9.525.rcvbp', configDirSuffix:'p9.525'
+  },
+  { gen:'G5', pitchLabel:'6 mm', type:'SMD', toolType:'Hex', toolSize:'3mm',
+    matrixH:48, matrixW:48,
+    rx:'k5', hub:'HUB-G5-3', altRx:'k5', altHub:'HUB-G5-4',
+    notes:'There is also a HUB-G5-2 version as well.',
+    cardImg:'modules/G5-6mm-SMD.png', modalImg:'modules/G5-6mm-SMD.png',
+    testPitch:null, camsPitch:null,
+    configMode:'g5', configPitchFolder:'P6', configFileExt:'P6.35.rcvbp', configDirSuffix:'p6.35'
+  },
+  { gen:'G5', pitchLabel:'4 mm', type:'SMD', toolType:'Hex', toolSize:'2mm',
+    matrixH:74, matrixW:74,
+    rx:'k5', hub:'HUB-G5-3', altRx:'k5', altHub:'HUB-G5-4',
+    notes:'There is also a HUB-G5-2 version as well.',
+    cardImg:'modules/G5-4mm-SMD.png', modalImg:'modules/G5-4mm-SMD.png',
+    testPitch:null, camsPitch:null,
+    configMode:'g5', configPitchFolder:'P4', configFileExt:'P4.23.rcvbp', configDirSuffix:'p4.23'
+  },
+];
+
+// ── GRID BUILD ───────────────────────────────────────────────────────────────
+function buildGrid() {
+  const grid = document.getElementById('module-grid');
+  const gens = ['G1','G2','G3','G4','G5'];
+  gens.forEach(gen => {
+    const items = SPECS.filter(s => s.gen === gen);
+    const section = document.createElement('div');
+    section.className = 'gen-section';
+    const row = items.map((s, i) => `
+      <div class="module-card" data-idx="${SPECS.indexOf(s)}">
+        <img class="module-card-img" src="${s.cardImg}" alt="${s.gen} ${s.pitchLabel}" onerror="this.style.opacity='.3'">
+        <div class="module-card-info">
+          <div class="module-card-gen">${s.gen}</div>
+          <div class="module-card-pitch">${s.pitchLabel}</div>
+          <div class="module-card-type">${s.type} · ${s.toolType}</div>
+        </div>
+      </div>`).join('');
+    section.innerHTML = `
+      <div class="gen-label">${gen} — ${items[0].toolType} · ${items[0].type}</div>
+      <div class="gen-row">${row}</div>`;
+    grid.appendChild(section);
+  });
+
+  grid.addEventListener('click', e => {
+    const card = e.target.closest('.module-card');
+    if (card) openModal(parseInt(card.dataset.idx));
+  });
+}
+
+// ── MODAL ────────────────────────────────────────────────────────────────────
+let activeSpec = null;
+
+function openModal(idx) {
+  activeSpec = SPECS[idx];
+  const s = activeSpec;
+
+  document.getElementById('modal-img').src = s.modalImg;
+  document.getElementById('modal-img').alt = `${s.gen} ${s.pitchLabel}`;
+  document.getElementById('modal-gen-badge').textContent = s.gen;
+  document.getElementById('modal-title').textContent = `${s.gen} — ${s.pitchLabel}`;
+  document.getElementById('modal-subtitle').textContent = `${s.type} · ${s.toolType} · ${s.toolSize} tool`;
+
+  const infoRows = [
+    ['Receive Card', s.rx],
+    ['Hub Board', s.hub],
+    s.altRx ? ['Alt. Receive Card', s.altRx] : null,
+    s.altHub ? ['Alt. Hub Board', s.altHub] : null,
+    ['Module Type', s.toolType],
+    ['Tool Size', s.toolSize],
+    ['Matrix Size', `${s.matrixW}×${s.matrixH} px/module`],
+  ].filter(Boolean);
+
+  document.getElementById('modal-info-grid').innerHTML = infoRows.map(([label, val]) =>
+    `<div class="info-row"><span class="info-label">${label}</span><span class="info-value">${val || '—'}</span></div>`
+  ).join('');
+
+  const notesEl = document.getElementById('modal-notes');
+  notesEl.innerHTML = s.notes ? `<div class="notes-box">${s.notes}</div>` : '';
+
+  document.getElementById('input-h').value = '';
+  document.getElementById('input-w').value = '';
+  document.getElementById('results-section').classList.remove('visible');
+  document.getElementById('results-grid').innerHTML = '';
+
+  document.getElementById('modal-overlay').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('active');
+  document.body.style.overflow = '';
+  activeSpec = null;
+}
+
+document.getElementById('modal-close').addEventListener('click', closeModal);
+document.getElementById('modal-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal-overlay')) closeModal();
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+// ── LOOKUP ───────────────────────────────────────────────────────────────────
+document.getElementById('btn-lookup').addEventListener('click', doLookup);
+document.getElementById('input-w').addEventListener('keydown', e => { if (e.key === 'Enter') doLookup(); });
+document.getElementById('input-h').addEventListener('keydown', e => { if (e.key === 'Enter') doLookup(); });
+
+function enc(str) { return str.split('/').map(s => encodeURIComponent(s)).join('/'); }
+
+function doLookup() {
+  const s = activeSpec;
+  if (!s) return;
+  const H = parseInt(document.getElementById('input-h').value);
+  const W = parseInt(document.getElementById('input-w').value);
+  if (!H || !W || H < 1 || W < 1) return;
+
+  const pixH = H * s.matrixH;
+  const pixW = W * s.matrixW;
+  const sizeKey = `${H}x${W}_${pixH}x${pixW}`;  // folder/file name segment
+
+  const resultsGrid = document.getElementById('results-grid');
+  resultsGrid.innerHTML = '';
+
+  // ── Test Pattern ──────────────────────────────────────────────────────────
+  let testCard = document.createElement('div');
+  testCard.className = 'result-card';
+  if (s.testPitch) {
+    const tpPath = `testpattern/${s.gen}/P${s.testPitch}/${sizeKey}.png`;
+    testCard.innerHTML = `
+      <div class="result-card-title">Test Pattern</div>
+      <img class="result-img" src="${enc(tpPath)}" alt="Test Pattern ${H}×${W}"
+           onerror="this.parentElement.innerHTML='<div class=\\'result-card-title\\'>Test Pattern</div><p class=\\'not-avail\\'>No pattern found for ${H}×${W} (${pixH}×${pixW} px)</p>'">`;
+  } else {
+    testCard.innerHTML = `<div class="result-card-title">Test Pattern</div><p class="not-avail">Not available for ${s.gen}</p>`;
+  }
+  resultsGrid.appendChild(testCard);
+
+  // ── CAM Images ────────────────────────────────────────────────────────────
+  let camCard = document.createElement('div');
+  camCard.className = 'result-card';
+  if (s.camsPitch) {
+    const bootPath  = `cams/${s.gen}/${s.camsPitch}/${sizeKey}/boot.png`;
+    const wallPath  = `cams/${s.gen}/${s.camsPitch}/${sizeKey}/wallpaper.png`;
+    camCard.innerHTML = `
+      <div class="result-card-title">CAM Images — ${H}×${W} (${pixH}×${pixW} px)</div>
+      <div class="result-img-pair">
+        <div class="result-img-wrap">
+          <img class="result-img" src="${enc(bootPath)}" alt="Boot"
+               onerror="this.style.opacity='.2';this.title='Not found'">
+          <div class="result-img-label">Boot</div>
+        </div>
+        <div class="result-img-wrap">
+          <img class="result-img" src="${enc(wallPath)}" alt="Wallpaper"
+               onerror="this.style.opacity='.2';this.title='Not found'">
+          <div class="result-img-label">Wallpaper</div>
+        </div>
+      </div>`;
+  } else {
+    camCard.innerHTML = `<div class="result-card-title">CAM Images</div><p class="not-avail">Not available for ${s.gen}</p>`;
+  }
+  resultsGrid.appendChild(camCard);
+
+  // ── Config Files ──────────────────────────────────────────────────────────
+  let cfgCard = document.createElement('div');
+  cfgCard.className = 'result-card';
+
+  let cfgHtml = '<div class="result-card-title">Config Files</div>';
+
+  if (s.configMode === 'flat') {
+    cfgHtml += `<p class="config-note">Config files for ${s.gen} are not size-specific — all available files listed below.</p>`;
+    cfgHtml += '<ul class="config-list">';
+    s.configFiles.forEach(path => {
+      const name = path.split('/').pop();
+      cfgHtml += `<li><a href="${enc(path)}" download="${name}">${name}</a></li>`;
+    });
+    cfgHtml += '</ul>';
+
+  } else if (s.configMode === 'g3') {
+    // Primary: i5+
+    const folder = `config/G3/i5+/${s.configPitchFolder}/${W}x${H}`;
+    const file   = `${folder}/${s.configPrefix}-${W}x${H}.rcvbp`;
+    cfgHtml += `<p class="config-note">Primary config (i5+) for ${W}W × ${H}H:</p>`;
+    cfgHtml += `<ul class="config-list"><li><a href="${enc(file)}" download>${s.configPrefix}-${W}x${H}.rcvbp</a></li></ul>`;
+
+    // Alternate: i5a-907 (list folder path, sizes are not cleanly matched)
+    if (s.altConfigPrefix) {
+      cfgHtml += `<p class="config-note" style="margin-top:12px">Alternate (i5a-907) configs — browse folder for matching size:<br>
+        <code style="font-size:.72rem;color:#aaa">config/G3/i5a-907/${s.altConfigPrefix}-{size}/</code></p>`;
+    }
+
+  } else if (s.configMode === 'g4') {
+    const folder = `config/G4/${s.configPitchFolder}/${W}x${H}`;
+    const prefix = `P${s.configPitchFolder}`;
+    cfgHtml += `<p class="config-note">Config files for ${W}W × ${H}H:</p>`;
+    cfgHtml += '<ul class="config-list">';
+    ['Card1-Config.rcvbp','SF.mapping','DF.mapping'].forEach(suffix => {
+      const name = `${prefix}-${W}x${H}-${suffix}`;
+      const path = `${folder}/${name}`;
+      cfgHtml += `<li><a href="${enc(path)}" download="${name}">${name}</a></li>`;
+    });
+    cfgHtml += '</ul>';
+
+  } else if (s.configMode === 'g5') {
+    const dirName = `${W}Wx${H}H-${s.configDirSuffix}`;
+    const folder  = `config/G5/${s.configPitchFolder}/${dirName}`;
+    const file    = `${folder}/${s.configFileExt}`;
+    cfgHtml += `<p class="config-note">Config for ${W}W × ${H}H:</p>`;
+    cfgHtml += `<ul class="config-list"><li><a href="${enc(file)}" download="${s.configFileExt}">${s.configFileExt}</a></li></ul>`;
+
+  } else {
+    cfgHtml += `<p class="not-avail">Size-specific mapping not available for ${s.gen} ${s.pitchLabel}.</p>`;
+  }
+
+  cfgCard.innerHTML = cfgHtml;
+  resultsGrid.appendChild(cfgCard);
+
+  document.getElementById('results-section').classList.add('visible');
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+buildGrid();
+</script>
+</body>
+</html>
